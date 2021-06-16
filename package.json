@@ -1,0 +1,9 @@
+{
+  "name": "wheel",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {},
+  "repository": "git@github.com:VFiee/wheel.git",
+  "author": "vyron <fiee_vyron@163.com>",
+  "license": "MIT"
+}

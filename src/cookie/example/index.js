@@ -1,48 +1,10 @@
-/**
- *  开始敲代码之前,先看一下cookie的格式
- *
- *  打开MDN: https://developer.mozilla.org/zh-CN/docs/Web/API/Document/cookie
- *  打开控制台,输入: document.cookie(get)
- *  输出: "preferredlocale=zh-CN; lux_uid=162384192899561728"
- *
- *  那么如何写入cookie呢?
- *  document.cookie = "key=value; key2=value2; ..."
- *
- *
- *
- */
-
-interface CookiePair {
-	[key: string]: string;
-}
-
-interface CookieProps {
-	path?: string;
-	expires?: number | string | Date;
-	domain?: string;
-	secure?: boolean;
-}
-
-interface CookieConvert {
-	decode: (text: string) => string;
-	encode: (text: string) => string;
-}
-
-interface CookieConfig {
-	props?: CookieProps;
-	convert?: CookieConvert;
-}
-
-const cookieConvert: CookieConvert = {
-	decode: (text: string) => decodeURIComponent(text),
-	encode: (text: string) => encodeURIComponent(text)
+const cookieConvert = {
+	decode: text => decodeURIComponent(text),
+	encode: text => encodeURIComponent(text)
 };
-
 class Cookie {
-	public TWENTY_FOUR_HOURS = 864e5;
-	public props: CookieProps;
-	public convert: CookieConvert;
-	constructor({ props, convert }: CookieConfig = {}) {
+	constructor({ props, convert } = {}) {
+		this.TWENTY_FOUR_HOURS = 864e5;
 		this.props = props || { path: "/" };
 		this.convert = convert || cookieConvert;
 	}
@@ -51,7 +13,7 @@ class Cookie {
 	 * @returns {CookiePair|null}
 	 *
 	 */
-	private getCookiePair(): CookiePair | null {
+	getCookiePair() {
 		const cookies = document.cookie
 			? this.convert.decode(document.cookie).split("; ")
 			: [];
@@ -59,7 +21,7 @@ class Cookie {
 		return cookies.reduce((res, cookie) => {
 			const [key, value] = cookie.split("=");
 			if (!res[key]) {
-				res[this.convert.encode(key)] = this.convert.decode(value);
+				res[this.convert.decode(key)] = this.convert.decode(value);
 			}
 			return res;
 		}, {});
@@ -69,7 +31,7 @@ class Cookie {
 	 * @param {string} key
 	 * @returns {string|null}
 	 */
-	getItem(key: string): string | null {
+	getItem(key) {
 		const cookiePair = this.getCookiePair();
 		if (!key || cookiePair == null) return null;
 		return cookiePair[this.convert.decode(key)];
@@ -81,8 +43,8 @@ class Cookie {
 	 * @param {CookieProps} props cookie设置参数
 	 * @returns {string} 返回document.cookie
 	 */
-	setItem(key: string, value: string, props: CookieProps = this.props): string {
-		props = { ...this.props, ...props };
+	setItem(key, value, props = this.props) {
+		props = Object.assign(Object.assign({}, this.props), props);
 		if (props.expires) {
 			const expires = props.expires;
 			if (typeof expires === "number") {
@@ -113,12 +75,15 @@ class Cookie {
 	 * @param {Omit<CookieProps, "secure" | "expires">} props 只能指定[path]和[domain]
 	 * @returns 如果key不存在,返回false,否则返回true
 	 */
-	removeItem(key: string, props: CookieProps = this.props): boolean {
+	removeItem(key, props = this.props) {
 		if (this.has(key)) {
-			return !!this.setItem(key, "", {
-				...props,
-				expires: "Thu, 01 Jan 1970 00:00:00 GMT"
-			});
+			return !!this.setItem(
+				key,
+				"",
+				Object.assign(Object.assign({}, props), {
+					expires: "Thu, 01 Jan 1970 00:00:00 GMT"
+				})
+			);
 		}
 		return false;
 	}
@@ -127,7 +92,7 @@ class Cookie {
 	 * @param {string} key
 	 * @returns {boolean} 存在则返回true,否则返回false
 	 */
-	has(key: string): boolean {
+	has(key) {
 		const cookiePair = this.getCookiePair();
 		return !!(cookiePair && cookiePair[this.convert.decode(key)]);
 	}
@@ -135,10 +100,9 @@ class Cookie {
 	 * 获取[cookie]的keys
 	 * @returns {string[]} 返回cookie的key组成的数组
 	 */
-	keys(): string[] {
+	keys() {
 		const cookiePair = this.getCookiePair();
 		return cookiePair == null ? [] : Object.keys(cookiePair);
 	}
 }
-
 export default new Cookie();
